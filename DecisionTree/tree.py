@@ -63,9 +63,9 @@ def choose_best_feature_to_split(data_set):
     """
     给定一个数据集, 判断用哪个特征进行分割能令信息熵最低
     对每个特征进行循环计算信息熵
-    得到信息熵最低的特征即为最佳分割特征
+    得到信息熵最低的特征即为最佳分割特征, 返回最佳分割特征的索引
     :param data_set: 数据集, list形式
-    :return: 最佳分割特征, int
+    :return: 最佳分割特征索引, int
     """
     num_features = len(data_set[0]) - 1
     base_entropy = calculate_shannon_entropy(data_set)
@@ -114,7 +114,8 @@ def create_tree(data_set, labels):
     best_feature = choose_best_feature_to_split(data_set)
     best_feature_label = labels[best_feature]  # 最佳分割特征标签
     my_tree = {best_feature_label: {}}  # 创建决策树节点, 格式为{特征标签 : 归属于该类的子树}
-    del(labels[best_feature])
+    del(labels[best_feature])  # 删除最佳分割标签, 剩余子集好进行下一步选择新最佳分割标签 (这一步会对原list进行操作导致原list变小)
+    # del不是直接从内存中删除, 而是删除这个指针引用, 此处等效于labels.remove(best_feature_label)
     feature_values = [example[best_feature] for example in data_set]  # 把每条数据的最佳分割特征值取出
     unique_vals = set(feature_values)  # 最佳分割特征值集合
     for value in unique_vals:  # 在集合里, 决策树节点[最佳特征标签][最佳分割特征值] = 子决策树节点
@@ -124,5 +125,31 @@ def create_tree(data_set, labels):
         # 递归地调用本方法, 通过返回新的节点给上一层的父节点, 最终生成一个根节点作为决策树的入口节点
     return my_tree
 
+
+def classify(input_tree, feature_labels, test_vector):
+    first_string = list(input_tree.keys())[0]
+    second_dict = input_tree[first_string]
+    feature_index = feature_labels.index(first_string)
+    class_label = None
+    for key in second_dict.keys():
+        if test_vector[feature_index] == key:
+            if type(second_dict[key]).__name__ == 'dict':
+                class_label = classify(second_dict[key], feature_labels, test_vector)
+            else:
+                class_label = second_dict[key]
+    return class_label
+
+
+def store_tree(input_tree, file_name):
+    import pickle
+    fw = open(file_name, 'wb')
+    pickle.dump(str(input_tree), fw)
+    fw.close()
+
+
+def grab_tree(file_name):
+    import pickle
+    fr = open(file_name, 'rb')
+    return pickle.load(fr)
 
 
