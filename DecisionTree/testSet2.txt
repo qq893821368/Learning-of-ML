@@ -1,0 +1,18 @@
+n	n	2	bike
+n	n	4	bike
+n	n	3	bike
+n	n	2	bike
+y	y	6	plane
+y	y	4	plane
+y	y	8	plane
+y	y	4	plane
+n	y	8	car
+n	y	4	car
+n	y	6	car
+n	y	5	car
+n	y	16	big car
+n	y	12	big car
+n	y	20	big car
+y	n	0	aircraft
+y	y	0	aircraft
+y	n	2	aircraft

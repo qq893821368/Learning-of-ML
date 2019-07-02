@@ -1,0 +1,18 @@
+0	0	2	bike
+0	0	4	bike
+0	0	3	bike
+0	0	2	bike
+1	1	6	plane
+1	1	4	plane
+1	1	8	plane
+1	1	4	plane
+0	1	8	car
+0	1	4	car
+0	1	6	car
+0	1	5	car
+0	1	16	big car
+0	1	12	big car
+0	1	20	big car
+1	0	0	aircraft
+1	1	0	aircraft
+1	0	2	aircraft
