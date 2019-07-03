@@ -96,7 +96,7 @@ def choose_best_feature_to_split(data_set):
     :param data_set: 数据集, list形式
     :return: 最佳分割特征索引, int
     """
-    num_features = len(data_set[0]) - 1
+    num_features = len(data_set[0]) - 1  # 这里特征数=len-1, 限定了不可能直接以已经划分的类别来分割, 默认我们的数据是需要制作决策树的
     base_entropy = calculate_shannon_entropy(data_set)
     best_info_gain, best_feature = 0.0, -1
     for i in range(num_features):
@@ -104,10 +104,10 @@ def choose_best_feature_to_split(data_set):
         unique_vals = set(feat_list)
         new_entropy = 0.0
         for value in unique_vals:
-            sub_data_set = split_data_set(data_set, i, value)
-            prob = len(sub_data_set)/float(len(data_set))
+            sub_data_set = split_data_set(data_set, i, value)   # 利用分割数据集的函数来定位value出现的次数
+            prob = len(sub_data_set)/float(len(data_set))   # 同上, 即可得到该value出现的频率, 即概率
             new_entropy += prob * calculate_shannon_entropy(sub_data_set)
-        info_gain = base_entropy - new_entropy
+        info_gain = base_entropy - new_entropy  # 计算信息增益, 看按当前这一特征分割, 使得信息熵下降了多少, 下降最多的即为最佳分割特征
         if info_gain > best_info_gain:
             best_info_gain = info_gain
             best_feature = i
@@ -153,11 +153,12 @@ def create_tree(data_set, labels):
     """
     class_list = [example[-1] for example in data_set]
     if class_list.count(class_list[0]) == len(class_list):  # 如果所有的数据都为同一类. 直接结束, 返回该类型
-        return class_list[0]
+        return class_list[0]                                # 这里通常情况是特征数量足够分类, 剩余若干行均为同一类型
     if len(data_set[0]) == 1:  # 如果只剩下一个特征, 返回出现最多次的类型
-        return prob_class(class_list)
-    # 这个条件语句是用来处理只有类别之分的数据, 此时data_set应被视为无效数据
-    # 因为只有类别却没有属性值用来分割, 没有判别类型的依据
+        # return prob_class(class_list)  # # 这里自己写了一个方法返回一个特征下每个特征值的概率, 是因为没有领悟原函数的内涵
+        return majority_count(class_list)  # 这里是特殊情况, 最后剩下一个特征而且特征值不一致, 即不同类别
+    # 这个条件语句是用来处理只有类别之分的数据, 此时data_set要么是出现了噪声要么是出现了特征不足以完整分割的情况,
+    # 此时选择概率最高的类别来作为它的类别, 因为只有类别却没有特征值用来分割, 没有判别类型的依据
     best_feature = choose_best_feature_to_split(data_set)
     best_feature_label = labels[best_feature]  # 最佳分割特征标签
     my_tree = {best_feature_label: {}}  # 创建决策树节点, 格式为{特征标签 : 归属于该类的子树}

@@ -90,9 +90,9 @@ def test_fake():
 
 if __name__ == '__main__':
     # test_fake()
-    classify_glasses()
+    # classify_glasses()
     # my_test()
-    # classify_dating()
+    classify_dating()
     # test_dating()
 
 
