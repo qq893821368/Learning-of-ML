@@ -109,7 +109,7 @@ def classify_naive_bayes0(vector2classify, p0_vector, p1_vector, p_class1):
     :param p0_vector: 非侮辱性文档条件下各词汇出现概率
     :param p1_vector: 侮辱性文档条件下各词汇出现概率
     :param p_class1: 是侮辱性文档的概率
-    :return: 是否侮辱性文档, int, 1为是, 0为否
+    :return: 是否侮辱性文档, bool
     """
     # # naive bayes只要求比较各个概率的大小, 而公式中的分母在各个概率计算中相同,
     # # 只起到求得具体数值的作用, 故忽略分母p(ω)
@@ -127,6 +127,10 @@ def classify_naive_bayes0(vector2classify, p0_vector, p1_vector, p_class1):
 
 
 def test_classify0():
+    """
+    测试函数, 测试classify_naive_bayes0方法和自己写的classify_naive_bayes1方法,
+    除了预设数据还提供一次用户自定数据的机会, 来对两个方法进行测试
+    """
     data, labels = load_data_set()
     my_vocab_list = create_vocab_list(data)
     train_mat = []
@@ -140,12 +144,20 @@ def test_classify0():
     this_doc = array(set_of_words2vec(my_vocab_list, test_entry))
     print(test_entry, ' classified as: ', classify_naive_bayes0(this_doc, p0_vector, p1_vector, p_Ab))
     input_str = input('input a sentence to classify:')
-    test_entry = input_str.split(" ")
+    test_entry = input_str.split()
     this_doc = array(set_of_words2vec(my_vocab_list, test_entry))
     print(test_entry, ' classified as: ', classify_naive_bayes1(this_doc, p0_vector, p1_vector, p_Ab))
 
 
 def classify_naive_bayes1(vector2classify, p0_vector, p1_vector, p_class1):
+    """
+    完整bayes formula下的分类方法
+    :param vector2classify: 同classify_naive_bayes0
+    :param p0_vector: 同classify_naive_bayes0
+    :param p1_vector: 同classify_naive_bayes0
+    :param p_class1: 同classify_naive_bayes0
+    :return: 同classify_naive_bayes0
+    """
     p0_vector = e**p0_vector  # 还原log
     p1_vector = e**p1_vector
     p_w_c0 = sum(p0_vector * vector2classify)  # 求p(ωi|ci)之和
@@ -157,3 +169,80 @@ def classify_naive_bayes1(vector2classify, p0_vector, p1_vector, p_class1):
         return True
     else:
         return False
+
+
+def bag_of_words2vec(vocab_list, input_set):
+    """
+    给定一个词汇集合列表和一个待分类文档, 返回词汇集合列表中各个词汇在文档中出现的次数向量
+    :param vocab_list: 词汇集合列表, list形式
+    :param input_set: 待分类文档, list形式
+    :return: 次数向量, list
+    """
+    return_vector = [0] * len(vocab_list)
+    for word in input_set:
+        if word in vocab_list:
+            return_vector[vocab_list.index(word)] += 1
+    return return_vector
+
+
+def split_char(input_str):
+    """
+    给定一个字符串, 以非数字、字母的字符为间隔进行分割, 返回分割后的列表
+    :param input_str:待分割字符串, str形式
+    :return:分割后列表, list
+    """
+    import re
+    regEx = re.compile(r'\W')
+    str_list = regEx.split(input_str)
+    return [tok.lower() for tok in str_list if len(tok) > 2]  # 分割方式很粗暴, 之后学习正则表达式来替换
+
+
+def load_sentences():
+    sentences = ['This book is the best book on Python or M.L. I have ever laid eyes upon.',
+                 'I am your father, my son.',
+                 'Your are Thor Odinson, the king of Asgard.You will be the supreme of nine sectors.',
+                 'I am Iron man.',
+                 'Oh, fuck, this hot dog, this, oh, shit, so delicious.Damn it.']
+    return sentences
+
+
+def spam_test():
+    doc_list, class_list, full_text = [], [], []
+    for i in range(1, 26):  # 这里预先给好的数据集有 1-25 共25个, 循环读入list中
+        word_list = split_char(open('email/spam/%d.txt' % i).read())  # 打开文件并且用上文的字符串分割函数分割好
+        doc_list.append(word_list)
+        full_text.append(word_list)
+        class_list.append(True)
+        word_list = split_char(open('email/ham/%d.txt' % i).read())
+        doc_list.append(word_list)
+        full_text.append(word_list)
+        class_list.append(False)
+    # 形成了完整的数据集矩阵doc_list, full_text以及标签列表class_list
+    vocab_list = create_vocab_list(doc_list)  # 用完整的数据集形成词汇集合
+    training_set = list(range(50))
+    # 训练集, 0-49, 数字, 这里是指在训练集中会出现的数据的下标, 即上述分割好的 25+25 个数据
+    # # python3 range返回的是range对象, 不返回数组对象, 这里添加一个list函数
+    test_set = []  # 测试集, 同训练集
+    for i in range(10):  # 选择10个用以测试的数据
+        rand_index = int(random.uniform(0, len(training_set)))  # 从 0-49 的范围中生成一个随机数
+        test_set.append(training_set[rand_index])  # 在测试集中添加下标
+        del(training_set[rand_index])  # 在训练集中删除下标, 保证两个集合不相交, 同时保证了两个集合的内部不重复(非set类型)
+    train_mat = []
+    train_classes = []
+    for doc_inx in training_set:  # 建立训练集的词汇出现情况矩阵
+        train_mat.append(set_of_words2vec(vocab_list, doc_list[doc_inx]))  # 添加一条训练向量
+        train_classes.append(class_list[doc_inx])  # 添加对应的类别
+    p0, p1, p_spam = train_naive_bayes0(array(train_mat), array(train_classes))  # 计算bayes formula参数
+    error_count = 0
+    for doc_inx in test_set:  # 在测试集中测试
+        word_vec = set_of_words2vec(vocab_list, doc_list[doc_inx])  # 用做好的词汇集合和测试集中的数据创建测试项链
+        res = classify_naive_bayes0(array(word_vec), p0, p1, p_spam)
+        if res != class_list[doc_inx]:  # 进行分类, 如果结果与真实情况不一致就记录
+            error_count += 1
+            print('The wrong data is doc_list[%d]:' % doc_inx)
+            print(doc_list[doc_inx])
+            print('The classifier came back with :%s, the real result is %s.' % (res, class_list[doc_inx]))
+            print()
+    print('The error count is :', error_count)
+    print('The error rate is : ', float(error_count) / len(test_set))
+
