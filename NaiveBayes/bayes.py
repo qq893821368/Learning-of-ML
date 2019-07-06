@@ -198,11 +198,12 @@ def split_char(input_str):
 
 
 def load_sentences():
-    sentences = ['This book is the best book on Python or M.L. I have ever laid eyes upon.',
+    sentences = ['This book is the best book on M.L. I have ever laid eyes upon, So I recommend this book to you.',
                  'I am your father, my son.',
                  'Your are Thor Odinson, the king of Asgard.You will be the supreme of nine sectors.',
                  'I am Iron man.',
-                 'Oh, fuck, this hot dog, this, oh, shit, so delicious.Damn it.']
+                 'Oh, fuck, this hot dog, this, oh, shit, so delicious.Damn it.',
+                 'This is my Web site\'s url: www.baidu.com or www.nchu.net']
     return sentences
 
 
