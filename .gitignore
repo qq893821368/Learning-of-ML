@@ -9,7 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
-feedparser/
+/feedparser/
 develop-eggs/
 dist/
 downloads/
