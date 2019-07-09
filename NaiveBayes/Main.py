@@ -61,4 +61,4 @@ def new_book_test():
 
 
 if __name__ == '__main__':
-    bayes.spam_test()
+    bayes.spam_test_by_bag()

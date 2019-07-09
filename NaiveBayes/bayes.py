@@ -247,3 +247,53 @@ def spam_test():
     print('The error count is :', error_count)
     print('The error rate is : ', float(error_count) / len(test_set))
 
+
+def spam_test_by_bag():
+    doc_list, class_list, full_text = [], [], []
+    for i in range(1, 26):  # 这里预先给好的数据集有 1-25 共25个, 循环读入list中
+        word_list = split_char(open('email/spam/%d.txt' % i).read())  # 打开文件并且用上文的字符串分割函数分割好
+        doc_list.append(word_list)
+        full_text.append(word_list)
+        class_list.append(True)
+        word_list = split_char(open('email/ham/%d.txt' % i).read())
+        doc_list.append(word_list)
+        full_text.append(word_list)
+        class_list.append(False)
+    # 形成了完整的数据集矩阵doc_list, full_text以及标签列表class_list
+    vocab_list = create_vocab_list(doc_list)  # 用完整的数据集形成词汇集合
+    training_set = list(range(50))
+    # 训练集, 0-49, 数字, 这里是指在训练集中会出现的数据的下标, 即上述分割好的 25+25 个数据
+    # # python3 range返回的是range对象, 不返回数组对象, 这里添加一个list函数
+    test_set = []  # 测试集, 同训练集
+    for i in range(10):  # 选择10个用以测试的数据
+        rand_index = int(random.uniform(0, len(training_set)))  # 从 0-49 的范围中生成一个随机数
+        test_set.append(training_set[rand_index])  # 在测试集中添加下标
+        del(training_set[rand_index])  # 在训练集中删除下标, 保证两个集合不相交, 同时保证了两个集合的内部不重复(非set类型)
+    train_mat = []
+    train_classes = []
+    for doc_inx in training_set:  # 建立训练集的词汇出现情况矩阵
+        train_mat.append(bag_of_words2vec(vocab_list, doc_list[doc_inx]))  # 添加一条训练向量
+        train_classes.append(class_list[doc_inx])  # 添加对应的类别
+    p0, p1, p_spam = train_naive_bayes0(array(train_mat), array(train_classes))  # 计算bayes formula参数
+    error_count = 0
+    for doc_inx in test_set:  # 在测试集中测试
+        word_vec = bag_of_words2vec(vocab_list, doc_list[doc_inx])  # 用做好的词汇集合和测试集中的数据创建测试项链
+        res = classify_naive_bayes0(array(word_vec), p0, p1, p_spam)
+        if res != class_list[doc_inx]:  # 进行分类, 如果结果与真实情况不一致就记录
+            error_count += 1
+            print('The wrong data is doc_list[%d]:' % doc_inx)
+            print(doc_list[doc_inx])
+            print('The classifier came back with :%s, the real result is %s.' % (res, class_list[doc_inx]))
+            print()
+    print('The error count is :', error_count)
+    print('The error rate is : ', float(error_count) / len(test_set))
+
+
+def cal_most_freq(vocab_list, full_text):
+    import operator as op
+    freq_dict = {}
+    for token in vocab_list:
+        freq_dict[token] = full_text.count(token)
+    sorted_freq = sorted(freq_dict.items(), key=op.itemgetter(1), reverse=True)
+    return sorted_freq[:30]
+
