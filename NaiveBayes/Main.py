@@ -1,5 +1,6 @@
 import NaiveBayes.bayes as bayes
 from math import e
+from feedparser import parse
 
 
 def my_test():
@@ -60,5 +61,22 @@ def new_book_test():
     print('classify0: ', bayes.classify_naive_bayes0(vec, p0, p1, pAb))
 
 
+def test_rss():
+    ny = parse('http://www.nasa.gov/rss/dyn/image_of_the_day.rss')
+    sf = parse('http://www.cppblog.com/kevinlynx/category/6337.html/rss')
+    vocab_list, p_sf, p_ny = bayes.local_words(ny, sf)
+
+
+def check_rss():
+    ny = parse('http://www.nasa.gov/rss/dyn/image_of_the_day.rss')
+    sf = parse('http://www.cppblog.com/kevinlynx/category/6337.html/rss')
+    print('len(ny):%s, len(ny[\'entries\']:%s' % (len(ny), len(ny['entries'])))
+    print('len(sf):%s, len(sf[\'entries\']:%s' % (len(sf), len(sf['entries'])))
+    ny_etries = ny['entries']
+    for e in ny_etries:
+        print(e)
+
+
 if __name__ == '__main__':
-    bayes.spam_test_by_bag()
+    test_rss()
+    # check_rss()

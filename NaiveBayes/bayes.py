@@ -290,10 +290,63 @@ def spam_test_by_bag():
 
 
 def cal_most_freq(vocab_list, full_text):
+    """
+    给定一个词汇集合列表和一个待计数向量,
+    返回以出现次数降序排序的前30个词汇及其次数,
+    以(词汇, 次数)的形式组成一个list
+    :param vocab_list: 词汇集合列表, list形式
+    :param full_text: 待计数的向量, list形式
+    :return: 词/次对列表, list
+    """
     import operator as op
     freq_dict = {}
-    for token in vocab_list:
-        freq_dict[token] = full_text.count(token)
-    sorted_freq = sorted(freq_dict.items(), key=op.itemgetter(1), reverse=True)
-    return sorted_freq[:30]
+    for token in vocab_list:  # 对于词汇列表里的每一个词
+        freq_dict[token] = full_text.count(token)  # 计算在待计数向量里出现的次数, 并组成词/次对
+    sorted_freq = sorted(freq_dict.items(), key=op.itemgetter(1), reverse=True)  # 对词/次列表对进行降序排序
+    return sorted_freq[:30]  # 返回前30个, 实际上, 应该根据需求来确定前多少个
+
+
+def local_words(feed1, feed0):
+    import feedparser as fp
+    doc_list, class_list, full_text = [], [], []
+    min_len = min(len(feed1['entries']), len(feed0['entries']))  # 得到两类数据中更少的那类的大小
+    for i in range(min_len):
+        word_list = split_char(feed1['entries'][i]['summary'])
+        doc_list.append(word_list)  # 记录数据, 按列加入备用数据集
+        full_text.extend(word_list)  # 记录数据, 全部组合成一条向量, 用以计算每个词出现的次数
+        class_list.append(1)  # 记录数据, 记录每条数据的类别
+        word_list = split_char(feed0['entries'][i]['summary'])
+        doc_list.append(word_list)
+        full_text.extend(word_list)
+        class_list.append(0)
+    vocab_list = create_vocab_list(doc_list)  # 根据数据集创建词汇集合
+    top30_words = cal_most_freq(vocab_list, full_text)
+    '''
+    for pair in top30_words:  # 对于出现次数最多的前30个词汇
+        if pair[0] in vocab_list:  # 如果在词汇列表里
+            vocab_list.remove(pair[0])  # 就予以删除
+    # 这里因为在英语中很多诸如that, which这样多次出现的助词, 很少的词占了很大的比例
+    '''
+    # 这里不知为何, 和书上的结果不一致, 添加该功能反而使得正确率大大降低
+    # 根据书上的说明, 原因应该出在cal_most_freq函数里, 最后取前n位要多加考量, 后续尝试使用决策树去确定
+    training_set, test_set = list(range(2*min_len)), []
+    # for i in range(20):
+    for i in range(int(0.25*len(training_set))):
+        rand_index = int(random.uniform(0, len(training_set)))
+        test_set.append(training_set[rand_index])
+        del(training_set[rand_index])
+    train_mat, train_classes = [], []
+    for doc_index in training_set:
+        train_mat.append(bag_of_words2vec(vocab_list, doc_list[doc_index]))
+        train_classes.append(class_list[doc_index])
+    p0, p1, p_spam = train_naive_bayes0(array(train_mat), array(train_classes))
+    error_count = 0.0
+    for doc_index in test_set:
+        word_vec = bag_of_words2vec(vocab_list, doc_list[doc_index])
+        if classify_naive_bayes0(array(word_vec), p0, p1, p_spam) != class_list[doc_index]:
+            error_count += 1
+    print('The error count is : ', error_count)
+    print('The error rate is : ', float(error_count) / len(test_set) * 100, '%')
+    return vocab_list, p0, p1
+
 
